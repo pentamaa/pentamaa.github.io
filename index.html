@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mateo — Monteur vidéo</title>
+<meta name="description" content="Portfolio de Mateo, monteur vidéo.">
+<style>
+  :root { --bg:#0e0e0f; --fg:#f2f2f2; --muted:#8a8a8f; --card:#18181a; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--fg); font:16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+  header { padding:64px 24px 32px; max-width:1200px; margin:0 auto; }
+  h1 { font-size:clamp(32px,5vw,56px); font-weight:700; letter-spacing:-0.02em; }
+  header p { color:var(--muted); margin-top:8px; }
+  main { max-width:1200px; margin:0 auto; padding:0 24px 80px;
+         display:grid; gap:24px; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); }
+  .v { background:var(--card); border-radius:12px; overflow:hidden; cursor:pointer; border:0; color:inherit; text-align:left; font:inherit; transition:transform .15s; }
+  .v:hover { transform:translateY(-3px); }
+  .v img { display:block; width:100%; aspect-ratio:16/9; object-fit:cover; background:#222; }
+  .v div { padding:12px 14px 16px; }
+  .v h2 { font-size:15px; font-weight:600; line-height:1.35; }
+  .v span { display:block; color:var(--muted); font-size:13px; margin-top:4px; }
+  #lecteur { position:fixed; inset:0; background:rgba(0,0,0,.88); display:none; align-items:center; justify-content:center; padding:24px; z-index:10; }
+  #lecteur.ouvert { display:flex; }
+  #lecteur iframe { width:min(1200px,100%); aspect-ratio:16/9; border:0; border-radius:8px; }
+  footer { text-align:center; color:var(--muted); font-size:13px; padding:0 24px 40px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Mateo</h1>
+  <p>Monteur vidéo</p>
+</header>
+<main id="grille"></main>
+<div id="lecteur" title="Fermer"></div>
+<footer>© <span id="annee"></span> Mateo</footer>
+<script>
+  const grille = document.getElementById('grille');
+  const lecteur = document.getElementById('lecteur');
+  document.getElementById('annee').textContent = new Date().getFullYear();
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  fetch('videos.json', {cache:'no-store'}).then(r => r.json()).then(videos => {
+    videos.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    grille.innerHTML = videos.map(v => `
+      <button class="v" data-id="${esc(v.id)}">
+        <img src="https://i.ytimg.com/vi/${esc(v.id)}/hqdefault.jpg" alt="" loading="lazy">
+        <div><h2>${esc(v.titre)}</h2><span>${esc(v.client || '')}</span></div>
+      </button>`).join('');
+  });
+  grille.addEventListener('click', e => {
+    const b = e.target.closest('.v'); if (!b) return;
+    lecteur.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${b.dataset.id}?autoplay=1" allow="autoplay; fullscreen; encrypted-media" allowfullscreen></iframe>`;
+    lecteur.classList.add('ouvert');
+  });
+  const fermer = () => { lecteur.classList.remove('ouvert'); lecteur.innerHTML = ''; };
+  lecteur.addEventListener('click', e => { if (e.target === lecteur) fermer(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') fermer(); });
+</script>
+</body>
+</html>
